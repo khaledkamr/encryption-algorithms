@@ -54,11 +54,13 @@ def encrypt_word(word, key):
     return encrypted_ascii
 
 def main():
-    # The example from the slides: encrypt "hope" with key "011"
     plaintext = "hope"
     key = "011"
+
+    print("S-BOX EXAMPLE")
+    print("=============")
     
-    print(f"Plaintext: {plaintext}")
+    print(f"\nPlaintext: {plaintext}")
     print(f"Key: {key}")
     
     encrypted_ascii = encrypt_word(plaintext, key)
