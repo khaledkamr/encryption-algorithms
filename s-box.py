@@ -1,80 +1,69 @@
-s_box = {
-    (0, 0, 0): (1, 1),
-    (0, 0, 1): (0, 1),
-    (0, 1, 0): (0, 0),
-    (0, 1, 1): (1, 0),
-    (1, 0, 0): (0, 1),
-    (1, 0, 1): (0, 0),
-    (1, 1, 0): (1, 1),
-    (1, 1, 1): (1, 0)
-}
-
-def text_to_binary(text):
-    """Convert text to binary string using ASCII values."""
-    binary = ""
-    for char in text:
-        ascii_val = ord(char)
-        bin_str = format(ascii_val, '08b')
-        binary += bin_str
-    return binary
+def s_box_lookup(input_bits):
+    s_box = {
+        "000": "00", 
+        "001": "01", 
+        "010": "00", 
+        "011": "10", 
+        "100": "01", 
+        "101": "00", 
+        "110": "11", 
+        "111": "10", 
+    }
+    return s_box[input_bits]
 
 def xor_bits(bits1, bits2):
-    """Perform XOR on two lists of bits."""
-    return [b1 ^ b2 for b1, b2 in zip(bits1, bits2)]
+    result = ""
+    for i in range(len(bits1)):
+        result += "1" if bits1[i] != bits2[i] else "0"
+    return result
 
-def sbox_lookup(input_bits):
-    """Look up the S-box output for a 3-bit input."""
-    return list(s_box[tuple(input_bits)])
+def encrypt_block(block, key):
+    x1, x2, x3, x4 = block[0], block[1], block[2], block[3]
+    k1, k2, k3 = key[0], key[1], key[2]
+    
+    # Calculate t1 t2 = S(x3 x4 x3 ⊕ k1 k2 k3)
+    s_box_input = xor_bits(x3 + x4 + x3, k1 + k2 + k3)
+    t1_t2 = s_box_lookup(s_box_input)
+    
+    # Calculate u1 u2 = x1 x2 ⊕ t1 t2
+    u1_u2 = xor_bits(x1 + x2, t1_t2)
+    
+    # Final output: E(x1 x2 x3 x4, k1 k2 k3) = x3 x4 u1 u2
+    encrypted_block = x3 + x4 + u1_u2
+    
+    return encrypted_block
 
-def encrypt_block(plaintext_bits, key_bits):
-    """Encrypt a 4-bit plaintext block with a 3-bit key."""
-    x1, x2, x3, x4 = plaintext_bits
-    k1, k2, k3 = key_bits
+def encrypt_word(word, key):
+    encrypted_ascii = []
     
-    input_xor = xor_bits([x3, x4, x3], [k1, k2, k3])
-    t1, t2 = sbox_lookup(input_xor)
+    for char in word:
+        binary = format(ord(char), '08b')  # Convert character to 8-bit binary
+        
+        # Process first 4 bits
+        first_block = binary[:4]
+        encrypted_first = encrypt_block(first_block, key)
+        
+        # Process second 4 bits
+        second_block = binary[4:]
+        encrypted_second = encrypt_block(second_block, key)
+        
+        # Combine the two encrypted blocks
+        encrypted_byte = encrypted_first + encrypted_second
+        encrypted_ascii.append(int(encrypted_byte, 2))
     
-    u1, u2 = xor_bits([x1, x2], [t1, t2]) 
-    
-    return [x3, x4, u1, u2]
-
-def encrypt_text(plaintext, key):
-    """Encrypt plaintext using the S-box algorithm."""
-    binary_text = text_to_binary(plaintext)
-    key_bits = [int(b) for b in format(int(key, 2), '03b')]
-    
-    ciphertext = []
-    for i in range(0, len(binary_text), 4):
-        block = [int(b) for b in binary_text[i:i+4]]
-        while len(block) < 4:
-            block.append(0)
-        encrypted_block = encrypt_block(block, key_bits)
-        ciphertext.extend(encrypted_block)
-    
-    return ''.join(str(b) for b in ciphertext)
-
-def binary_to_ascii_numbers(binary_str):
-    """Convert binary string to ASCII decimal numbers."""
-    ascii_numbers = []
-    for i in range(0, len(binary_str), 8):
-        byte = binary_str[i:i+8]
-        if len(byte) < 8:
-            byte = byte + '0' * (8 - len(byte))
-        ascii_val = int(byte, 2)
-        ascii_numbers.append(str(ascii_val))
-    return ', '.join(ascii_numbers)
+    return encrypted_ascii
 
 def main():
+    # The example from the slides: encrypt "hope" with key "011"
     plaintext = "hope"
     key = "011"
+    
     print(f"Plaintext: {plaintext}")
     print(f"Key: {key}")
     
-    ciphertext = encrypt_text(plaintext, key)
-    print(f"Ciphertext (binary): {ciphertext}")
+    encrypted_ascii = encrypt_word(plaintext, key)
+    print(f"Encrypted ASCII values: {encrypted_ascii}")
     
-    ascii_output = binary_to_ascii_numbers(ciphertext)
-    print(f"Ciphertext (ASCII): {ascii_output}")
 
 if __name__ == "__main__":
     main()
