@@ -47,11 +47,8 @@ def running_key_vigenere_decrypt(ciphertext, running_key):
             plaintext += ciphertext[i]
             continue
         
-        # Convert to numbers (0-25)
         c = letter_to_number(ciphertext[i])
         k = letter_to_number(key_stream[key_index])
-        
-        # Decrypt: (c - k + 26) mod 26
         p = (c - k + 26) % 26
         
         plaintext += number_to_letter(p)
