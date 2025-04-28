@@ -1,1 +1,0 @@
-expanded_key = key.replace(" ", "") + plaintext[:len(plaintext) - len(key.replace(" ", ""))]
